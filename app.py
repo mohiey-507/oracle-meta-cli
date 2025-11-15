@@ -5,6 +5,7 @@ import getpass
 import argparse
 import logging
 from db_connection import init_connection_pool, close_connection_pool
+from ui_flow import handle_main_menu, handle_object_list, handle_object_details
 
 def setup_logging():
     """Sets up the logging configuration."""
@@ -43,7 +44,38 @@ def main():
 
     logging.info("Database connection pool initialized successfully.")
 
-    return None
+    state_handlers = {
+        'main_menu': handle_main_menu,
+        'object_list': handle_object_list,
+        'object_details': handle_object_details,
+    }
+
+    state = 'main_menu'
+    context = {}
+    breadcrumb = ['[Main Menu]']
+
+    while state != 'exit':
+        logging.info(f"State: {state}, Context: {context}")
+        handler = state_handlers[state]
+
+        if state == 'main_menu':
+            state, object_type = handler(breadcrumb)
+            if state == 'object_list':
+                context['object_type'] = object_type
+        elif state == 'object_list':
+            state, object_name = handler(context['object_type'], breadcrumb)
+            if state == 'object_details':
+                context['object_name'] = object_name
+            elif state == 'main_menu':
+                context.pop('object_type', None)
+        elif state == 'object_details':
+            state, returned_context = handler(context['object_type'], context['object_name'], breadcrumb)
+            if state == 'object_list':
+                context.pop('object_name', None)
+
+    close_connection_pool()
+    logging.info("Application shutting down.")
+    print("Exiting Oracle Metadata Explorer. Goodbye!")
 
 if __name__ == '__main__':
     main()

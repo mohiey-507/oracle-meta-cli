@@ -3,6 +3,7 @@ Handles user interface flow.
 """
 import logging
 from tabulate import tabulate
+from config import METADATA_QUERIES
 
 logger = logging.getLogger(__name__)
 
@@ -33,3 +34,31 @@ def get_choice(prompt, valid_choices, allow_back=True):
         if choice in valid_choices:
             return choice
         print("Invalid choice. Please try again.")
+
+def handle_main_menu(breadcrumb):
+    """Handles the main menu."""
+    print_separator()
+    print_breadcrumb(breadcrumb)
+    print("Select the object type to view:")
+    object_types = list(METADATA_QUERIES.keys())
+    for i, obj_type in enumerate(object_types, 1):
+        print(f"{i}. {obj_type.capitalize()}")
+    print(f"{len(object_types) + 1}. Exit")
+    
+    choice = get_choice("Enter option number: ", [str(i) for i in range(1, len(object_types) + 2)], allow_back=False)
+    if choice == str(len(object_types) + 1):
+        logger.info("User chose to exit from the main menu.")
+        return 'exit', None
+
+    selected_type = object_types[int(choice) - 1]
+    logger.info(f"User selected object type: {selected_type}")
+    breadcrumb.append(f'[{selected_type.capitalize()}]')
+    return 'object_list', selected_type
+
+def handle_object_list(object_type, breadcrumb):
+    """Handles the object list menu."""
+    raise NotImplementedError()
+
+def handle_object_details(object_type, object_name, breadcrumb):
+    """Handles the object details menu."""
+    raise NotImplementedError()
