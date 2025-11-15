@@ -83,4 +83,23 @@ def handle_object_list(object_type, breadcrumb):
 
 def handle_object_details(object_type, object_name, breadcrumb):
     """Handles the object details menu."""
-    raise NotImplementedError()
+    print_separator()
+    print_breadcrumb(breadcrumb)
+    metadata_types = list(METADATA_QUERIES[object_type].keys())
+    print("Select the metadata to view:")
+    for i, meta_type in enumerate(metadata_types, 1):
+        print(f"{i}. {meta_type.capitalize()}")
+
+    choice = get_choice("Enter option number: ", [str(i) for i in range(1, len(metadata_types) + 1)])
+    if choice == 'back':
+        logger.info(f"User chose to go back to the object list for {object_type}.")
+        breadcrumb.pop()
+        return 'object_list', object_type
+
+    selected_metadata = metadata_types[int(choice) - 1]
+    logger.info(f"User selected to view metadata: {selected_metadata} for {object_name}")
+    headers, data = get_metadata(object_type, object_name, selected_metadata)
+    print_separator()
+    print(f"Metadata: {selected_metadata.capitalize()} for {object_name}")
+    print_table(headers, data)
+    return 'object_details', object_name
