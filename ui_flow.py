@@ -4,6 +4,7 @@ Handles user interface flow.
 import logging
 from tabulate import tabulate
 from config import METADATA_QUERIES
+from db_connection import list_objects, get_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,28 @@ def handle_main_menu(breadcrumb):
 
 def handle_object_list(object_type, breadcrumb):
     """Handles the object list menu."""
-    raise NotImplementedError()
+    print_separator()
+    print_breadcrumb(breadcrumb)
+    objects = list_objects(object_type)
+    if not objects:
+        print(f"No {object_type.lower()}s found.")
+        breadcrumb.pop()
+        return 'main_menu', None
+
+    print(f"Available {object_type.capitalize()}s:")
+    for i, obj in enumerate(objects, 1):
+        print(f"{i:2d}. {obj}")
+
+    choice = get_choice("Select a number", [str(i) for i in range(1, len(objects) + 1)])
+    if choice == 'back':
+        logger.info("User chose to go back to the main menu.")
+        breadcrumb.pop()
+        return 'main_menu', None
+
+    selected_object = objects[int(choice) - 1]
+    logger.info(f"User selected object: {selected_object}")
+    breadcrumb.append(f'[{selected_object}]')
+    return 'object_details', selected_object
 
 def handle_object_details(object_type, object_name, breadcrumb):
     """Handles the object details menu."""
