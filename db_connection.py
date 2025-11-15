@@ -4,7 +4,7 @@ Handles database connection and data retrieval.
 
 import logging
 import oracledb
-from .config import METADATA_QUERIES, OBJECT_LIST_QUERIES
+from config import METADATA_QUERIES, OBJECT_LIST_QUERIES
 
 pool = None
 logger = logging.getLogger(__name__)
