@@ -14,10 +14,10 @@ def init_connection_pool(username, password, dsn):
     global pool
     try:
         pool = oracledb.create_pool(user=username, password=password, dsn=dsn, min=2, max=5, increment=1)
-        return True
+        return None
     except oracledb.Error as e:
         logger.error(f"Connection failed: {e}")
-        return False
+        return e
 
 def close_connection_pool():
     """Closes the database connection pool."""
@@ -26,6 +26,22 @@ def close_connection_pool():
         pool.close()
         pool = None
         logger.info("Database connection pool closed.")
+
+
+def test_connection():
+    """Tests the database connection."""
+    global pool
+    if not pool:
+        raise ConnectionError("Connection pool is not initialized.")
+
+    try:
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1 FROM DUAL")
+                return True
+    except oracledb.Error as e:
+        logger.error(f"Connection test failed: {e}")
+        return e
 
 def get_metadata(object_type, object_name, metadata_type):
     """Fetches metadata for a given database object."""
