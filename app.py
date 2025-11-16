@@ -4,7 +4,7 @@ Main.
 import getpass
 import argparse
 import logging
-from db_connection import init_connection_pool, close_connection_pool
+from db_connection import init_connection_pool, close_connection_pool, test_connection
 from ui_flow import handle_main_menu, handle_object_list, handle_object_details
 
 def setup_logging():
@@ -17,6 +17,33 @@ def setup_logging():
             logging.StreamHandler()
         ]
     )
+
+def establish_connection(args):
+    while True:
+        hostname = args.hostname or input("Enter host name (default 'localhost'): ") or "localhost"
+        username = input("Enter username: ")
+        password = getpass.getpass("Enter password: ")
+        service  = args.service  or input("Enter service name (default 'ORCLPDB1'): ") or "ORCLPDB1"
+        dsn = f"{hostname}:{args.port}/{service}"
+
+        init_error = init_connection_pool(username, password, dsn)
+        if init_error:
+            print(f"Failed to initialize connection pool: {init_error}")
+        else:
+            test_result = test_connection()
+            if test_result is True:
+                logging.info("Database connection pool initialized and tested successfully.")
+                return True
+            
+            if "ORA-01017" in str(test_result):
+                print(f"Invalid username or password: {test_result}")
+            else:
+                print(f"Connection test failed: {test_result}")
+
+        retry = input("Connection failed. Try again? (y/n): ").lower()
+        if retry != 'y':
+            logging.info("User chose not to retry connection.")
+            return False
 
 def main():
     """Main application loop."""
@@ -32,18 +59,9 @@ def main():
     print("Welcome to Oracle Metadata Explorer!")
     print("-----------------------------------")
 
-    hostname = args.hostname or input("Enter host name (default 'localhost'): ") or "localhost"
-    username = input("Enter username: ")
-    password = getpass.getpass("Enter password: ")
-    service  = args.service  or input("Enter service name (default 'ORCLPDB1'): ") or "ORCLPDB1"
-    dsn = f"{hostname}:{args.port}/{service}"
-
-    if not init_connection_pool(username, password, dsn):
-        logging.error("Failed to initialize database connection pool. Exiting.")
+    if not establish_connection(args):
         return
-
-    logging.info("Database connection pool initialized successfully.")
-
+    
     state_handlers = {
         'main_menu': handle_main_menu,
         'object_list': handle_object_list,
